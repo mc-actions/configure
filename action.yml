@@ -1,0 +1,48 @@
+name: "MinIO CLI Configure Action"
+description: "Downloads binary and configures it for using with your favourite s3 server."
+author: Dyakov Space <dev@dyakov.space>
+branding:
+  icon: 'upload-cloud'
+  color: 'green'
+
+inputs:
+  server_alias:
+    description: 'Server alias to use in CLI'
+    default: 'default'
+  s3_server:
+    description: 'S3 hostname of server to use'
+    required: true
+  s3_access_key:
+    description: 'MinIO Access Key, AWS key id'
+    required: true
+  s3_secret_key:
+    description: 'MinIO Secret Key, AWS secret access key'
+    required: true
+  s3_api:
+    description: 'API version to use'
+    default: 'S3v4'  # S3v4, S3v2
+  path:
+    description: 'Path'
+    default: 'auto'  # auto, on, off, dns
+
+runs:
+  using: composite
+  steps:
+    - name: Download MinIO CLI
+      shell: bash
+      run: |
+        curl https://dl.min.io/client/mc/release/linux-amd64/mc \
+          --create-dirs \
+          -o $HOME/minio-binaries/mc
+        chmod +x $HOME/minio-binaries/mc
+        echo "$HOME/minio-binaries/" >> "$GITHUB_PATH"
+    - name: Create configuration file
+      shell: bash
+      run: |
+        $HOME/minio-binaries/mc alias set \
+          ${{ inputs.server_alias }} \
+          ${{ inputs.s3_server }} \
+          ${{ inputs.s3_access_key }} \
+          ${{ inputs.s3_secret_key }} \
+          --path ${{ inputs.path }} \
+          --api ${{ inputs.s3_api }}
